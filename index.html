@@ -41,6 +41,7 @@
   #bones { position: absolute; inset: 0; z-index: 7; pointer-events: none; }
 
   #stage { cursor: none; }
+  #stage.pl-sleep, #stage.pl-sleep * { animation-play-state: paused !important; }
   #paw { position: absolute; left: 0; top: 0; width: 18px; height: 20px;
     z-index: 8; pointer-events: none; opacity: 0; will-change: transform, opacity;
     transition: opacity .14s ease;
@@ -92,7 +93,7 @@
 </head>
 <body>
   <svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="fishtint" x="-25%" y="-25%" width="150%" height="150%" color-interpolation-filters="sRGB"><feFlood flood-color="#1f7d91" flood-opacity="0.32" result="t"/><feComposite in="t" in2="SourceGraphic" operator="in" result="tm"/><feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="tm"/></feMerge></filter>
-    <filter id="wave" x="-6%" y="-6%" width="112%" height="112%" color-interpolation-filters="sRGB">
+    <filter id="wave" x="-3%" y="-3%" width="106%" height="106%" color-interpolation-filters="sRGB">
       <feTurbulence type="fractalNoise" baseFrequency="0.009 0.014" numOctaves="1" seed="7" result="n">
         <animate attributeName="baseFrequency" dur="13s" repeatCount="indefinite" calcMode="spline"
           keyTimes="0;0.25;0.5;0.75;1"
@@ -101,7 +102,7 @@
       </feTurbulence>
       <feDisplacementMap in="SourceGraphic" in2="n" scale="11" xChannelSelector="R" yChannelSelector="G"/>
     </filter>
-    <filter id="waveReflect" x="-35%" y="-35%" width="170%" height="170%" color-interpolation-filters="sRGB">
+    <filter id="waveReflect" x="-4%" y="-4%" width="108%" height="108%" color-interpolation-filters="sRGB">
       <feTurbulence type="fractalNoise" baseFrequency="0.013 0.019" numOctaves="1" seed="13" result="rn">
         <animate attributeName="baseFrequency" dur="9s" repeatCount="indefinite" calcMode="spline"
           keyTimes="0;0.5;1" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"
@@ -493,7 +494,7 @@
       if (st.cx > END) { st.el.remove(); active.splice(i, 1); }
     }
     updateStars(dt);
-    requestAnimationFrame(frame);
+    if (window.__pondAwake !== false) { requestAnimationFrame(frame); } else { window.__pondKick = function () { last = performance.now(); requestAnimationFrame(frame); }; }
   }
   requestAnimationFrame(frame);
 
@@ -749,6 +750,32 @@
     function run() { splitEl(document.getElementById('tagline')); splitEl(document.getElementById('prevjob')); }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
     else run();
+  })();
+  </script>
+<script>
+  (function () {
+    var stage = document.getElementById('stage');
+    if (!stage) return;
+    var defs = document.querySelector('svg[width="0"][height="0"]');
+    var onScreen = true;
+    function sleep() {
+      if (window.__pondAwake === false) return;
+      window.__pondAwake = false;
+      try { if (defs && defs.pauseAnimations) defs.pauseAnimations(); } catch (e) {}
+      stage.classList.add('pl-sleep');
+    }
+    function wake() {
+      if (window.__pondAwake !== false) return;
+      window.__pondAwake = true;
+      try { if (defs && defs.unpauseAnimations) defs.unpauseAnimations(); } catch (e) {}
+      stage.classList.remove('pl-sleep');
+      if (window.__pondKick) { var k = window.__pondKick; window.__pondKick = null; k(); }
+    }
+    function update() { (onScreen && !document.hidden) ? wake() : sleep(); }
+    document.addEventListener('visibilitychange', update);
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(function (es) { onScreen = es[0].isIntersecting; update(); }, { threshold: 0 }).observe(stage);
+    }
   })();
   </script>
 </body>
