@@ -648,13 +648,12 @@
     if (window.__setBonesSprites) window.__setBonesSprites(state);
   }
   // automatic time-of-day (viewer's local time):
-  // morning 6:00-11:59, day 12:00-16:59, sunset 17:00-20:59, night 21:00-05:59
+  // morning 5:00-11:59, day 12:00-18:59, sunset 19:00-04:59
   function stateForNow() {
     var h = new Date().getHours();
-    if (h >= 6 && h < 12) return "morning";
-    if (h >= 12 && h < 17) return "day";
-    if (h >= 17 && h < 21) return "sunset";
-    return "night";
+    if (h >= 5 && h < 12) return "morning";
+    if (h >= 12 && h < 19) return "day";
+    return "sunset";
   }
   var current = null;
   function tick() { var s = stateForNow(); if (s !== current) { current = s; apply(s); } }
